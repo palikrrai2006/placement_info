@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+    <style>
+        body { font-family: Arial; padding: 40px; background: #f5f5f5; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+        button { width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #45a049; }
+        .error { color: red; margin: 10px 0; }
+        .success { color: green; margin: 10px 0; }
+        .info { background: #e7f3ff; padding: 15px; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔐 Login Test Page</h2>
+        <div class="info">
+            <strong>Test Account:</strong><br>
+            Email: demo@test.com<br>
+            Password: demo123
+        </div>
+        
+        <form id="loginForm">
+            <input type="email" id="email" placeholder="Email" value="demo@test.com" required>
+            <input type="password" id="password" placeholder="Password" value="demo123" required>
+            <button type="submit">Login</button>
+        </form>
+        
+        <div id="result"></div>
+        <div id="console" style="margin-top: 20px; padding: 15px; background: #f9f9f9; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        const resultDiv = document.getElementById('result');
+        const consoleDiv = document.getElementById('console');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            consoleDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            console.log(message);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            resultDiv.innerHTML = '';
+            consoleDiv.innerHTML = '';
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            log('Starting login process...');
+            log(`Email: ${email}`);
+            log(`Password length: ${password.length}`);
+
+            try {
+                log('Sending request to http://localhost:5000/api/auth/login');
+                
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                log(`Response status: ${response.status}`);
+                
+                const data = await response.json();
+                log(`Response data: ${JSON.stringify(data, null, 2)}`, data.success ? 'success' : 'error');
+
+                if (data.success) {
+                    resultDiv.innerHTML = `<div class="success">✅ Login successful!<br>User: ${data.data.user.fullName}<br>Token: ${data.data.token.substring(0, 20)}...</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+                }
+            } catch (err) {
+                log(`ERROR: ${err.message}`, 'error');
+                resultDiv.innerHTML = `<div class="error">❌ Connection error: ${err.message}</div>`;
+            }
+        });
+
+        log('Test page loaded. Backend should be at http://localhost:5000');
+    </script>
+</body>
+</html>
